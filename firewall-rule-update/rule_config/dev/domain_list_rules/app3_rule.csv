@@ -1,0 +1,3 @@
+domain,action,description
+.hashicorp.io,ALLOW,Hashicorp registry and subdomains
+.facebook.com,ALLOW,Facebook registry and subdomain
