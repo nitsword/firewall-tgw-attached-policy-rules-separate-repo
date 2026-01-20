@@ -19,3 +19,9 @@ variable "application" { type = string }
 variable "environment" { type = string }
 variable "base_tags" { type = map(string) }
 variable "env" { type = string }
+
+variable "existing_s3_bucket_name" {
+  description = "Name of an existing S3 bucket"
+  type        = string
+  default     = ""
+}

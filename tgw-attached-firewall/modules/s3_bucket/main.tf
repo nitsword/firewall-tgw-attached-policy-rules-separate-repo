@@ -1,31 +1,40 @@
+locals {
+  # This picks the correct bucket name for the logging configuration
+  # If existing_s3_bucket_name is empty, use the ID of the bucket we just created [0]
+  final_bucket_name = var.existing_s3_bucket_name == "" ? aws_s3_bucket.this[0].id : var.existing_s3_bucket_name
+}
+
 resource "aws_s3_bucket" "this" {
-  bucket = "${var.application}-${var.env}-tmo-firewall-logs-bucket-2"
+  count         = var.existing_s3_bucket_name == "" ? 1 : 0
+  bucket        = "${var.application}-${var.env}-tmo-firewall-logs-bucket-3"
   force_destroy = true
-  
-    tags = merge(
-  {
-    Name                  = "${var.application}-${var.env}-fw-logs-bucket-2"
-    "Resource Type"       = "s3-bucket"
-    "Creation Date"       = timestamp()
-    "Environment"         = var.environment
-    "Application" = var.application
-    "Created by"          = "Cloud Network Team"
-    "breadthOfConsumption"  = "Single"
-    "dataSensitivity"      = "Internal"
-    "dangerOfExploitation"  = "INA"
-  },var.base_tags
-)
+
+  tags = merge(
+    {
+      Name                   = "${var.application}-${var.env}-fw-logs-bucket-3"
+      "Resource Type"        = "s3-bucket"
+      "Creation Date"        = timestamp()
+      "Environment"          = var.environment
+      "Application"          = var.application
+      "Created by"           = "Cloud Network Team"
+      "breadthOfConsumption" = "Single"
+      "dataSensitivity"      = "Internal"
+      "dangerOfExploitation" = "INA"
+    }, var.base_tags
+  )
 }
 
 resource "aws_s3_bucket_versioning" "this" {
-  bucket = aws_s3_bucket.this.id
+  count  = var.existing_s3_bucket_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.this[0].id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
 resource "aws_s3_bucket_public_access_block" "this" {
-  bucket                  = aws_s3_bucket.this.id
+  count                   = var.existing_s3_bucket_name == "" ? 1 : 0
+  bucket                  = aws_s3_bucket.this[0].id
   block_public_acls       = true
   ignore_public_acls      = true
   block_public_policy     = true
@@ -35,7 +44,8 @@ resource "aws_s3_bucket_public_access_block" "this" {
 data "aws_caller_identity" "current" {}
 
 data "aws_iam_policy_document" "bucket_policy" {
-  
+  count = var.existing_s3_bucket_name == "" ? 1 : 0
+
   # Allow Firewall Log Delivery
   statement {
     sid    = "AllowNetworkFirewallLogs"
@@ -46,8 +56,8 @@ data "aws_iam_policy_document" "bucket_policy" {
     }
     actions = ["s3:PutObject", "s3:GetBucketAcl"]
     resources = [
-      aws_s3_bucket.this.arn,
-      "${aws_s3_bucket.this.arn}/*"
+      aws_s3_bucket.this[0].arn,
+      "${aws_s3_bucket.this[0].arn}/*"
     ]
     condition {
       test     = "StringEquals"
@@ -63,32 +73,32 @@ data "aws_iam_policy_document" "bucket_policy" {
       type        = "*"
       identifiers = ["*"]
     }
-    actions   = ["s3:*"]
+    actions = ["s3:*"]
     resources = [
-      aws_s3_bucket.this.arn,
-      "${aws_s3_bucket.this.arn}/*"
+      aws_s3_bucket.this[0].arn,
+      "${aws_s3_bucket.this[0].arn}/*"
     ]
-    
+
     condition {
       test     = "NotIpAddress"
       variable = "aws:SourceIp"
-      values   = ["208.54.0.0/17", "206.29.160.0/19", "122.161.66.29/32"]
+      values   = ["208.54.0.0/17", "206.29.160.0/19", "122.161.78.201/32"]
     }
     condition {
       test     = "Bool"
       variable = "aws:ViaAWSService"
       values   = ["false"]
     }
-    
+
     condition {
       test     = "StringNotLike"
       variable = "aws:PrincipalArn"
-      values   = [
+      values = [
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/*",
         "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/*"
-        ]
+      ]
     }
-  
+
     condition {
       test     = "StringNotLike"
       variable = "aws:PrincipalServiceName"
@@ -105,23 +115,25 @@ data "aws_iam_policy_document" "bucket_policy" {
       identifiers = ["*"]
     }
     actions   = ["s3:*"]
-    resources = [aws_s3_bucket.this.arn, "${aws_s3_bucket.this.arn}/*"]
+    resources = [aws_s3_bucket.this[0].arn, "${aws_s3_bucket.this[0].arn}/*"]
     condition {
-      test     = "Bool" 
-      variable = "aws:SecureTransport" 
-      values = ["false"]
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
     }
   }
 }
 
 resource "aws_s3_bucket_policy" "this" {
-  bucket     = aws_s3_bucket.this.id
-  policy     = data.aws_iam_policy_document.bucket_policy.json
+  count      = var.existing_s3_bucket_name == "" ? 1 : 0
+  bucket     = aws_s3_bucket.this[0].id
+  policy     = data.aws_iam_policy_document.bucket_policy[0].json
   depends_on = [aws_s3_bucket_public_access_block.this]
 }
 
 resource "aws_s3_bucket_ownership_controls" "this" {
-  bucket = aws_s3_bucket.this.id
+  count  = var.existing_s3_bucket_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.this[0].id
   rule {
     object_ownership = "BucketOwnerEnforced"
   }
@@ -129,7 +141,8 @@ resource "aws_s3_bucket_ownership_controls" "this" {
 
 # --- 3. LIFECYCLE RULE (180 Days) ---
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
-  bucket = aws_s3_bucket.this.id
+  count  = var.existing_s3_bucket_name == "" ? 1 : 0
+  bucket = aws_s3_bucket.this[0].id
 
   rule {
     id     = "lifecycle rule"
@@ -145,5 +158,3 @@ resource "aws_s3_bucket_lifecycle_configuration" "this" {
     }
   }
 }
-
-

@@ -1,0 +1,3 @@
+domain,action,description
+.terraform.io,ALLOW,Terraform registry and subdomains
+.redhat.io,ALLOW,Redhat registry and subdomains

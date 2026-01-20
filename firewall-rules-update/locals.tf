@@ -75,7 +75,7 @@ locals {
   # Pattern: action protocol source_ip source_port direction destination_ip destination_port (msg:"CSRE_NO"; sid:SID; rev:1;)
   suricata_rule_list = [
     for row in local.suricata_raw_data :
-    format("%s %s %s %s %s %s %s (msg:\"%s\"; sid:%s; rev:1;)",
+    format("%s %s %s %s %s %s %s (msg:\"%s | %s | %s\"; sid:%s;)",
       row.action,
       row.protocol,
       row.source_ip == "HOME_NET" ? "$HOME_NET" : row.source_ip,
@@ -83,6 +83,8 @@ locals {
       row.direction,
       replace(row.destination_ip, "HOME_NET", "$HOME_NET"),
       row.destination_port,
+      row.rule_name,
+      row.message,
       row.csre_no,
       row.sid
     )

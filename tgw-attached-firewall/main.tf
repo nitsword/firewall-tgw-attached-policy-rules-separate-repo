@@ -17,13 +17,13 @@ provider "aws" {
 
 # Module for Suricata Rules
 module "suricata_rules" {
-  source               = "./modules/suricata_rules"
-  environment          = var.environment
-  application          = var.application
-  region               = var.region
-  env                  = var.env
-  base_tags            = var.base_tags
-  firewall_policy_name = var.firewall_policy_name
+  source                = "./modules/suricata_rules"
+  environment           = var.environment
+  application           = var.application
+  region                = var.region
+  env                   = var.env
+  base_tags             = var.base_tags
+  firewall_policy_name  = var.firewall_policy_name
   enable_suricata_rules = var.enable_suricata_rules
 
   home_net_cidrs       = ["10.0.0.0/8"]
@@ -44,7 +44,7 @@ module "domain_rules" {
   domain_rg_capacity        = var.domain_rg_capacity
   stateful_rule_order       = var.stateful_rule_order
   priority_domain_allowlist = var.priority_domain_allowlist
-  domain_list = ["initial.placeholder.com"]
+  domain_list               = ["initial.placeholder.com"]
 }
 
 # Module for 5-Tuple Rules
@@ -59,8 +59,8 @@ module "five_tuple_rules" {
   five_tuple_rg_capacity = var.five_tuple_rg_capacity
   stateful_rule_order    = var.stateful_rule_order
   priority_five_tuple    = var.priority_five_tuple
-  enable_5tuple_rules = var.enable_5tuple_rules
-  # Provide one dummy rule to satisfy the AWS API requirement
+  enable_5tuple_rules    = var.enable_5tuple_rules
+  # Providing one dummy rule to satisfy the AWS API requirement
   five_tuple_rules = [{
     action           = "PASS"
     protocol         = "TCP"
@@ -107,17 +107,21 @@ module "firewall" {
   firewall_policy_arn   = module.firewall_policy_conf.firewall_policy_arn
   transit_gateway_id    = var.transit_gateway_id
   availability_zone_ids = var.availability_zone_ids
-  depends_on            = [module.secure_s3_bucket]
+  depends_on = [
+    module.secure_s3_bucket,
+    module.firewall_policy_conf
+  ]
 }
 
 module "secure_s3_bucket" {
-  source                 = "./modules/s3_bucket"
-  application            = var.application
-  environment            = var.environment
-  env                    = var.env
-  base_tags              = var.base_tags
-  bucket_name            = var.bucket_name
-  allowed_principal_arns = ["arn:aws:iam::359416636780:user/terraform-test"]
+  source                  = "./modules/s3_bucket"
+  application             = var.application
+  environment             = var.environment
+  env                     = var.env
+  base_tags               = var.base_tags
+  bucket_name             = var.bucket_name
+  existing_s3_bucket_name = var.existing_s3_bucket_name
+  allowed_principal_arns  = ["arn:aws:iam::359416636780:user/terraform-test"]
 }
 
 # Configure Logging

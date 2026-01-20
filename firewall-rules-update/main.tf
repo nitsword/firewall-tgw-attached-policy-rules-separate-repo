@@ -42,7 +42,6 @@ resource "null_resource" "update_suricata" {
   provisioner "local-exec" {
     interpreter = ["bash"]
     command     = "./apply_suricata.sh"
-    #command = "bash ./apply_suricata.sh" - need to Use this line for gitlab linux based runner
   }
 }
 

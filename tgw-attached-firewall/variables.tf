@@ -132,3 +132,9 @@ variable "enable_5tuple_rules" {
   type        = bool
   default     = true
 }
+
+variable "existing_s3_bucket_name" {
+  description = "Name of an existing S3 bucket. If left empty, a new bucket will be created."
+  type        = string
+  default     = ""
+}
