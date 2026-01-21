@@ -138,3 +138,8 @@ variable "existing_s3_bucket_name" {
   type        = string
   default     = ""
 }
+
+variable "s3_allowed_principals" {
+  description = "List of IAM ARNs allowed to access the S3 bucket"
+  type        = list(string)
+}

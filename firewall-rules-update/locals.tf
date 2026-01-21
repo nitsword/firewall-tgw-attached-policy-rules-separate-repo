@@ -18,7 +18,7 @@ locals {
   ])
 
   # ---------------------------------------------------------------------------
-  # 5-TUPLE RULES: Merging multiple CSVs
+  # 5-TUPLE RULES: Merging multiple CSVs 
   # ---------------------------------------------------------------------------
   tuple_files = fileset(path.module, "${local.rules_base_path}/five_tuple_rules/*.csv")
 
@@ -72,7 +72,7 @@ locals {
   ])
 
   # 2. Convert each row into a Suricata Rule String
-  # Pattern: action protocol source_ip source_port direction destination_ip destination_port (msg:"CSRE_NO"; sid:SID; rev:1;)
+  # Pattern: action protocol source_ip source_port direction destination_ip destination_port (msg:"CSRE_NO"; sid:SID;)
   suricata_rule_list = [
     for row in local.suricata_raw_data :
     format("%s %s %s %s %s %s %s (msg:\"%s | %s | %s\"; sid:%s;)",

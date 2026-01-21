@@ -26,8 +26,16 @@ aws network-firewall update-rule-group \
   --update-token "${data.external.suricata_info.result.Token}" \
   --region "${var.region}" \
   --rule-group '{
+    "RuleVariables": {
+      "IPSets": {
+        ${join(", ", [
+          for key, value in (var.rule_ip_sets != null ? var.rule_ip_sets : {}) : 
+          "\"${key}\": {\"Definition\": ${jsonencode(value.definition)}}"
+        ])}
+      }
+    },
     "RulesSource": {
-      "RulesString": ${jsonencode(replace(trimspace(local.combined_suricata_rules), "http", "tcp"))}
+      "RulesString": ${jsonencode(trimspace(local.combined_suricata_rules))}
     },
     "StatefulRuleOptions": {
       "RuleOrder": "STRICT_ORDER"
@@ -37,7 +45,10 @@ EOT
 }
 
 resource "null_resource" "update_suricata" {
-  triggers = { rules_hash = sha256(local.combined_suricata_rules) }
+  triggers = { 
+    rules_hash = sha256(local.combined_suricata_rules)
+    script_hash = sha256(local_file.apply_suricata.content)
+    }
   depends_on = [local_file.apply_suricata]
   provisioner "local-exec" {
     interpreter = ["bash"]
@@ -66,7 +77,7 @@ aws network-firewall update-rule-group \
     "RulesSource": {
       "RulesSourceList": {
         "Targets": ${jsonencode(local.allowed_domains)},
-        "TargetTypes": ["TLS_SNI", "HTTP_HOST"],
+        "TargetTypes": ${jsonencode(var.target_types)},
         "GeneratedRulesType": "ALLOWLIST"
       }
     },

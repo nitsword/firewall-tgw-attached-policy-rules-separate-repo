@@ -30,6 +30,12 @@ variable "rules_string" {
   default = ""
 }
 
+variable "stateful_rule_order" {
+  description = "The order in which stateful rules are evaluated."
+  type        = string
+  default     = "STRICT_ORDER"
+}
+
 variable "application" { type = string }
 variable "environment" { type = string }
 variable "region" { type = string }

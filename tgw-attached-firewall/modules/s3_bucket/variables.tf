@@ -1,7 +1,7 @@
-variable "bucket_name" {
-  description = "Name of the S3 bucket"
-  type        = string
-}
+# variable "bucket_name" {
+#   description = "Name of the S3 bucket"
+#   type        = string
+# }
 
 variable "tags" {
   description = "Tags to apply to the bucket"
@@ -24,4 +24,9 @@ variable "existing_s3_bucket_name" {
   description = "Name of an existing S3 bucket"
   type        = string
   default     = ""
+}
+
+variable "bucket_name_segment" {
+  description = "Custom segment to include in the bucket name"
+  type        = string
 }

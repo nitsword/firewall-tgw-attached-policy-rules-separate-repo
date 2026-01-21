@@ -25,8 +25,9 @@ module "suricata_rules" {
   base_tags             = var.base_tags
   firewall_policy_name  = var.firewall_policy_name
   enable_suricata_rules = var.enable_suricata_rules
+  stateful_rule_order       = var.stateful_rule_order
 
-  home_net_cidrs       = ["10.0.0.0/8"]
+  home_net_cidrs       = ["10.0.0.0/8"] # Example CIDR, will be overridden by rule_ip_sets provided in firewall-rules-update repo.
   suricata_rg_capacity = var.suricata_rg_capacity
   rules_string         = "# Initialized by Repo 1 - Managed by Repo 2"
 }
@@ -119,9 +120,10 @@ module "secure_s3_bucket" {
   environment             = var.environment
   env                     = var.env
   base_tags               = var.base_tags
-  bucket_name             = var.bucket_name
+  # bucket_name             = var.bucket_name
+  bucket_name_segment     = var.bucket_name
   existing_s3_bucket_name = var.existing_s3_bucket_name
-  allowed_principal_arns  = ["arn:aws:iam::359416636780:user/terraform-test"]
+  allowed_principal_arns  = var.s3_allowed_principals
 }
 
 # Configure Logging
@@ -129,6 +131,7 @@ resource "aws_networkfirewall_logging_configuration" "this" {
   firewall_arn = module.firewall.firewall_arn
 
   logging_configuration {
+    #Alert Logs (Traffic matching DROP, ALERT, or REJECT rules)
     log_destination_config {
       log_destination = {
         bucketName = module.secure_s3_bucket.bucket_id
@@ -137,7 +140,7 @@ resource "aws_networkfirewall_logging_configuration" "this" {
       log_destination_type = "S3"
       log_type             = "ALERT"
     }
-    # 3. TLS Logs (Encryption Handshake Events)
+    #  TLS Logs (Encryption Handshake Events)
     log_destination_config {
       log_destination = {
         bucketName = module.secure_s3_bucket.bucket_id
@@ -145,6 +148,15 @@ resource "aws_networkfirewall_logging_configuration" "this" {
       }
       log_destination_type = "S3"
       log_type             = "TLS"
+    }
+    # Flow Logs (Standard network traffic metadata)
+    log_destination_config {
+      log_destination = {
+        bucketName = module.secure_s3_bucket.bucket_id
+        prefix     = "flow"
+      }
+      log_destination_type = "S3"
+      log_type             = "FLOW"
     }
   }
 }

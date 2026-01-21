@@ -4,7 +4,7 @@ resource "aws_networkfirewall_firewall_policy" "firewall_policy" {
   firewall_policy {
     stateless_default_actions          = ["aws:forward_to_sfe"]
     stateless_fragment_default_actions = ["aws:drop"]
-    stateful_default_actions           = ["aws:drop_established", "aws:alert_established"]
+    stateful_default_actions           = ["aws:drop_established_app_layer", "aws:alert_established_app_layer"]
 
     stateful_engine_options {
       rule_order = var.stateful_rule_order

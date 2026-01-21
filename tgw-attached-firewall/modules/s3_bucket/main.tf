@@ -4,14 +4,17 @@ locals {
   final_bucket_name = var.existing_s3_bucket_name == "" ? aws_s3_bucket.this[0].id : var.existing_s3_bucket_name
 }
 
+##############################
+# S3 Bucket Creation
+##############################
 resource "aws_s3_bucket" "this" {
   count         = var.existing_s3_bucket_name == "" ? 1 : 0
-  bucket        = "${var.application}-${var.env}-tmo-firewall-logs-bucket-3"
+  bucket = "${var.application}-${var.env}-${var.bucket_name_segment}-bucket"
   force_destroy = true
 
   tags = merge(
     {
-      Name                   = "${var.application}-${var.env}-fw-logs-bucket-3"
+      Name                   = "${var.application}-${var.env}-${var.bucket_name_segment}-bucket"
       "Resource Type"        = "s3-bucket"
       "Creation Date"        = timestamp()
       "Environment"          = var.environment
@@ -24,6 +27,9 @@ resource "aws_s3_bucket" "this" {
   )
 }
 
+##############################
+# Enable S3 Bucket Versioning (TMO Standard)
+##############################
 resource "aws_s3_bucket_versioning" "this" {
   count  = var.existing_s3_bucket_name == "" ? 1 : 0
   bucket = aws_s3_bucket.this[0].id
@@ -32,6 +38,9 @@ resource "aws_s3_bucket_versioning" "this" {
   }
 }
 
+##############################
+# Block All Forms of Public Access (as per tmo standard)
+##############################
 resource "aws_s3_bucket_public_access_block" "this" {
   count                   = var.existing_s3_bucket_name == "" ? 1 : 0
   bucket                  = aws_s3_bucket.this[0].id
@@ -43,10 +52,13 @@ resource "aws_s3_bucket_public_access_block" "this" {
 
 data "aws_caller_identity" "current" {}
 
+##############################
+# S3 Bucket Policy Definition
+##############################
 data "aws_iam_policy_document" "bucket_policy" {
   count = var.existing_s3_bucket_name == "" ? 1 : 0
 
-  # Allow Firewall Log Delivery
+  # Allows Firewall for Log Delivery
   statement {
     sid    = "AllowNetworkFirewallLogs"
     effect = "Allow"
@@ -59,13 +71,14 @@ data "aws_iam_policy_document" "bucket_policy" {
       aws_s3_bucket.this[0].arn,
       "${aws_s3_bucket.this[0].arn}/*"
     ]
+    # Restrict log delivery to the same AWS account
     condition {
       test     = "StringEquals"
       variable = "aws:SourceAccount"
       values   = [data.aws_caller_identity.current.account_id]
     }
   }
-
+  # Deny access from untrusted IPs and principals
   statement {
     sid    = "RestrictAccessToTrustedIPs"
     effect = "Deny"
@@ -78,7 +91,7 @@ data "aws_iam_policy_document" "bucket_policy" {
       aws_s3_bucket.this[0].arn,
       "${aws_s3_bucket.this[0].arn}/*"
     ]
-
+    # Deny access if source IP is NOT from approved ranges
     condition {
       test     = "NotIpAddress"
       variable = "aws:SourceIp"
@@ -124,6 +137,9 @@ data "aws_iam_policy_document" "bucket_policy" {
   }
 }
 
+##############################
+# Attach Bucket Policy (as per TMO Standard)
+##############################
 resource "aws_s3_bucket_policy" "this" {
   count      = var.existing_s3_bucket_name == "" ? 1 : 0
   bucket     = aws_s3_bucket.this[0].id
@@ -131,6 +147,9 @@ resource "aws_s3_bucket_policy" "this" {
   depends_on = [aws_s3_bucket_public_access_block.this]
 }
 
+##############################
+# Enforce Bucket Ownership Controls
+##############################
 resource "aws_s3_bucket_ownership_controls" "this" {
   count  = var.existing_s3_bucket_name == "" ? 1 : 0
   bucket = aws_s3_bucket.this[0].id
@@ -139,7 +158,7 @@ resource "aws_s3_bucket_ownership_controls" "this" {
   }
 }
 
-# --- 3. LIFECYCLE RULE (180 Days) ---
+# --- S3 BUCKET LIFECYCLE RULE (180 Days) - as per TMO standard---
 resource "aws_s3_bucket_lifecycle_configuration" "this" {
   count  = var.existing_s3_bucket_name == "" ? 1 : 0
   bucket = aws_s3_bucket.this[0].id

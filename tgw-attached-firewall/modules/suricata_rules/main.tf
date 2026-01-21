@@ -21,7 +21,7 @@ resource "aws_networkfirewall_rule_group" "suricata_rule_group" {
     }
 
     stateful_rule_options {
-      rule_order = "STRICT_ORDER"
+      rule_order = var.stateful_rule_order
     }
   }
 

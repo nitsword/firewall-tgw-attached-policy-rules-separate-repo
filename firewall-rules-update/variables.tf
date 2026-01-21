@@ -37,3 +37,17 @@ variable "five_tuple_rg_name" {
   description = "The exact name of the 5-Tuple rule group in AWS."
   type        = string
 }
+
+variable "target_types" {
+  description = "Traffic inspection types (e.g., TLS_SNI, HTTP_HOST)"
+  type        = list(string)
+  default     = ["TLS_SNI", "HTTP_HOST"]
+}
+
+variable "rule_ip_sets" {
+  description = "A map of IP set variables for Suricata rules"
+  type = map(object({
+    definition = list(string)
+  }))
+  default = null
+}

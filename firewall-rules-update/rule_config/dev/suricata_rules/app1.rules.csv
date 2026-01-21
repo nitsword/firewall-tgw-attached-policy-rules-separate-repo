@@ -2,3 +2,4 @@ action,protocol,source_ip,source_port,direction,destination_ip,destination_port,
 drop,http,HOME_NET,any,->,0.0.0.0/0,443,dev-app1-drop-rule,block secure port access,CHG00001,2026011401
 alert,tcp,HOME_NET,any,->,0.0.0.0/0,443,dev-app1-alert-rule,allow secure tcp,CHG00002,2026011402
 alert,tcp,HOME_NET,any,->,!HOME_NET,443,dev-app1-alert-rule,allow secure tcp,CHG00003,2026011403
+pass,tcp,HOME_NET,any,->,0.0.0.0/0,443,npe-app1-allow-rule,allow secure tcp,CHG00007,2026012101
